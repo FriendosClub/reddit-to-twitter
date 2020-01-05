@@ -126,12 +126,24 @@ redditUser.getHot(process.env.SUBREDDIT)
         console.log('> Finished downloading image from Reddit');
 
         const filterEnabled = Boolean(process.env.FILTER_ENABLED);
-        const filterRegex = new RegExp(process.env.FILTER_REGEXP);
+        const filterRegex = new RegExp(process.env.FILTER_REGEXP, 'gi');
         let { title } = post;
 
         if (filterEnabled) {
-          title = title.replace(filterRegex, (match) => new Array(match.length + 1).join('*'));
+          console.log('> Filtering words.');
+
+          title = title.replace(filterRegex, (match) => {
+            console.log(`> Filtering ${match}`);
+            let filter = Array(match.length + 1).join('*');
+
+            filter = match[0] + filter.slice(1, -1) + match[match.length - 1];
+
+            return (filter);
+          });
         }
+
+        console.log(`> New title: ${title}`);
+
         const status = `${title}
 
         - Posted by u/${post.author.name} on r/${process.env.SUBREDDIT} (https://redd.it/${post.id})`;
