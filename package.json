@@ -10,6 +10,7 @@
     "test": "eslint . --max-warnings 0"
   },
   "dependencies": {
+    "console-stamp": "^0.2.9",
     "dotenv": "^8.2.0",
     "node-fetch": "^2.6.0",
     "sequelize": "^5.21.3",

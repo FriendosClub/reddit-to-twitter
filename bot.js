@@ -11,6 +11,7 @@ const findGoodPosts = require('./modules/findGoodPosts');
 
 const allowedMIMETypes = ['image/gif', 'image/jpeg', 'image/png'];
 
+require('console-stamp')(console, 'HH:MM:ss.l');
 require('dotenv').config();
 
 const sequelizeLogger = fs.createWriteStream('./tmp/sequelize.log', { flags: 'a' });
