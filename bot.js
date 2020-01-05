@@ -145,9 +145,7 @@ redditUser.getHot(process.env.SUBREDDIT)
 
         console.log(`> New title: ${title}`);
 
-        const status = `${title}
-
-        - Posted by u/${post.author.name} on r/${process.env.SUBREDDIT} (https://redd.it/${post.id})`;
+        const status = `${title} (https://redd.it/${post.id})`;
 
         twitterUser.postMediaChunked({ file_path: fileName }, (err, data) => {
           twitterUser.post('statuses/update', {
