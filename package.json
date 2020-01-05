@@ -1,0 +1,26 @@
+{
+  "name": "reddit-to-twitter",
+  "version": "1.0.0",
+  "description": "Mirrors posts from a subreddit of your choice to a Twitter account. Authenticates as a Reddit user to access private subreddits.",
+  "main": "bot.js",
+  "author": "Ralph Drake",
+  "license": "GPL-3.0",
+  "scripts": {
+    "start": "node bot.js",
+    "test": "eslint . --max-warnings 0"
+  },
+  "dependencies": {
+    "dotenv": "^8.2.0",
+    "node-fetch": "^2.6.0",
+    "sequelize": "^5.21.3",
+    "snoowrap": "^1.20.1",
+    "sqlite3": "^4.1.1",
+    "sync-foreach": "^1.0.2",
+    "twit": "^2.2.11"
+  },
+  "devDependencies": {
+    "eslint": "^5.16.0 || ^6.1.0",
+    "eslint-config-airbnb-base": "^14.0.0",
+    "eslint-plugin-import": "^2.18.2"
+  }
+}
