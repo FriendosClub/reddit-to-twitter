@@ -10,12 +10,10 @@ const findGoodPost = (posts) => new Promise((resolve, reject) => {
 
     if (post.is_video) {
       // TODO: Implement downloading video, maybe re-encoding with ffmpeg?
-      console.log(` > ${post.id} is a video, skipping for now...`);
       return;
     }
 
     if (post.score < minScore) {
-      console.log(` > Skipping post ${post.id} (${post.score} < ${minScore})`);
       return;
     }
 

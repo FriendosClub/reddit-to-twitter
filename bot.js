@@ -13,9 +13,11 @@ const allowedMIMETypes = ['image/gif', 'image/jpeg', 'image/png'];
 
 require('dotenv').config();
 
+const sequelizeLogger = fs.createWriteStream('./tmp/sequelize.log', { flags: 'a' });
 const sequelize = new Sequelize({
   dialect: 'sqlite',
   storage: 'db.sqlite',
+  logging: (msg) => { sequelizeLogger.write(msg); },
 });
 
 class Post extends Sequelize.Model { }
@@ -37,10 +39,10 @@ Post.init({
 sequelize
   .authenticate()
   .then(() => {
-    console.log('Sequelize set up successfully.');
+    console.log('> Sequelize set up successfully.');
     if (process.env.NODE_ENV !== 'production') {
       sequelize.sync({ /* force: true */ }).then(() => {
-        console.log('Database synced.\n\n');
+        console.log('> Database synced.');
       });
     }
   })
@@ -53,8 +55,10 @@ const redditUserOptions = {
 };
 
 if (process.env.REDDIT_REFRESH_TOKEN) {
+  console.log('> Preparing Reddit account with refresh token.');
   redditUserOptions.refreshToken = process.env.REDDIT_REFRESH_TOKEN;
 } else if (process.env.REDDIT_USERNAME && process.env.REDDIT_PASSWORD) {
+  console.log('> Preparing Reddit account with username/password');
   redditUserOptions.username = process.env.REDDIT_USERNAME;
   redditUserOptions.password = process.env.REDDIT_PASSWORD;
 } else {
@@ -78,17 +82,15 @@ redditUser.getHot(process.env.SUBREDDIT)
   .then(findGoodPosts)
   // Pick a suitable posts from those results + database check
   .then((goodPosts) => new Promise((resolve) => {
-    console.log('> Starting sync foreach loop...');
-
     let chosenPost = null;
+
+    console.log('> Beginning search for suitable post...');
 
     syncForEach(goodPosts, (next, post) => {
       Post.findOrCreate({
         where: { shortcode: post.id },
         defaults: { shortcode: post.id, processed: false },
       }).then(([dbPost]) => {
-        console.log(`> generated record: ${JSON.stringify(dbPost)}`);
-
         if (dbPost.processed === false) {
           chosenPost = post;
           next('done');
@@ -97,6 +99,7 @@ redditUser.getHot(process.env.SUBREDDIT)
         }
       });
     }).done(() => {
+      console.log(`> Chose "${chosenPost.title}" (https://redd.it/${chosenPost.id})`);
       resolve(chosenPost);
     });
   }))
@@ -107,6 +110,7 @@ redditUser.getHot(process.env.SUBREDDIT)
       const contentType = res.headers.get('content-type').toLowerCase();
 
       if (!allowedMIMETypes.includes(contentType)) {
+        console.warn(`> Aborting post ${post.id} since it is ${contentType}`);
         return;
       }
 
@@ -114,19 +118,32 @@ redditUser.getHot(process.env.SUBREDDIT)
       const fileName = `./tmp/${post.id}.${fileExtension}`;
 
       const mediaAttachment = fs.createWriteStream(fileName);
-      console.log(`> saving ${fileName}`);
       res.body.pipe(mediaAttachment);
 
+      // Once we've fully downloaded the file, upload it to Twitter via stream
+      // this gives forward compatibility for videos.
       mediaAttachment.on('finish', () => {
-        console.log(`> saved ${fileName}.`);
+        console.log('> Finished downloading image from Reddit');
+
+        const filterEnabled = Boolean(process.env.FILTER_ENABLED);
+        const filterRegex = new RegExp(process.env.FILTER_REGEXP);
+        let { title } = post;
+
+        if (filterEnabled) {
+          title = title.replace(filterRegex, (match) => new Array(match.length + 1).join('*'));
+        }
+        const status = `${title}
+
+        - Posted by u/${post.author.name} on r/${process.env.SUBREDDIT} (https://redd.it/${post.id})`;
 
         twitterUser.postMediaChunked({ file_path: fileName }, (err, data) => {
-          console.log(`media_id_string: ${data.media_id_string}`);
-
           twitterUser.post('statuses/update', {
-            status: post.title,
+            status,
             media_ids: [data.media_id_string],
-          }, () => {
+          }, (e, d) => {
+            if (e) { throw e; }
+
+            console.log(`> Posted Tweet: https://twitter.com/${d.user.screen_name}/status/${d.id_str}`);
             Post.update({ processed: true }, { where: { shortcode: post.id } });
           });
         });
