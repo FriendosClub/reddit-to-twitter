@@ -112,6 +112,11 @@ redditUser.getHot(process.env.SUBREDDIT)
 
       if (!allowedMIMETypes.includes(contentType)) {
         console.warn(`> Aborting post ${post.id} since it is ${contentType}`);
+        Post.update({
+          processed: true,
+        }, {
+          where: { shortcode: post.id },
+        });
         return;
       }
 
