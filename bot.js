@@ -14,28 +14,20 @@ const allowedMIMETypes = ['image/gif', 'image/jpeg', 'image/png'];
 require('console-stamp')(console, 'HH:MM:ss.l');
 require('dotenv').config();
 
+// Set up Sequelize
 const sequelizeLogger = fs.createWriteStream('./tmp/sequelize.log', { flags: 'a' });
 const sequelize = new Sequelize({
   dialect: 'sqlite',
   storage: 'db.sqlite',
-  logging: (msg) => { sequelizeLogger.write(msg); },
+  logging: (msg) => {
+    if (process.env.NODE_ENV !== 'production') {
+      sequelizeLogger.write(msg);
+    }
+  },
 });
 
-class Post extends Sequelize.Model { }
-Post.init({
-  shortcode: {
-    type: Sequelize.STRING(6),
-    unique: true,
-    allowNull: false,
-  },
-  processed: {
-    type: Sequelize.BOOLEAN,
-    defaultValue: false,
-  },
-}, {
-  sequelize,
-  modelName: 'post',
-});
+// Sequelize Models
+const Post = require('./modules/models/Post')(sequelize);
 
 sequelize
   .authenticate()
