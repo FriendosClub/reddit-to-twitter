@@ -1,7 +1,6 @@
 # Instance-specific files
 db.sqlite
 tmp/*
-!tmp/.gitkeep
 
 # Logs
 logs
