@@ -12,7 +12,7 @@
   "dependencies": {
     "console-stamp": "^0.2.9",
     "dotenv": "^8.2.0",
-    "node-fetch": "^2.6.0",
+    "node-fetch": "^2.6.1",
     "sequelize": "^5.21.3",
     "snoowrap": "^1.20.1",
     "sqlite3": "^4.1.1",
